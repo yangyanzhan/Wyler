@@ -9,12 +9,16 @@
 import Foundation
 import ReplayKit
 import Photos
+import AVFoundation
+import CoreMedia
 
 public enum WylerError: Error {
   case photoLibraryAccessNotGranted
 }
 
 final public class ScreenRecorder {
+    public static let shared = ScreenRecorder()
+    
   private var videoOutputURL: URL?
   private var videoWriter: AVAssetWriter?
   private var videoWriterInput: AVAssetWriterInput?
@@ -94,10 +98,13 @@ final public class ScreenRecorder {
   
   private func createAndAddAudioInput() -> AVAssetWriterInput {
     let settings = [
-        AVFormatIDKey: Int(kAudioFormatMPEG4AAC),
-        AVSampleRateKey: 12000,
-        AVNumberOfChannelsKey: 1,
-        AVEncoderAudioQualityKey: AVAudioQuality.high.rawValue
+        AVFormatIDKey: Int(kAudioFormatLinearPCM) as AnyObject,
+        AVSampleRateKey: 16000 as AnyObject,
+        AVNumberOfChannelsKey: 1 as AnyObject,
+        AVLinearPCMBitDepthKey: 16 as AnyObject,
+        AVLinearPCMIsBigEndianKey: false as AnyObject,
+        AVLinearPCMIsFloatKey: false as AnyObject,
+        AVLinearPCMIsNonInterleaved: false as AnyObject
     ]
 
     let audioInput = AVAssetWriterInput(mediaType: .audio, outputSettings: settings)
@@ -119,14 +126,28 @@ final public class ScreenRecorder {
       case .video:
         self.handleSampleBuffer(sampleBuffer: sampleBuffer)
       case .audioApp:
-        self.add(sample: sampleBuffer, to: self.appAudioWriterInput)
+//        self.add(sample: sampleBuffer, to: self.appAudioWriterInput)
+          break
       case .audioMic:
-        self.add(sample: sampleBuffer, to: self.micAudioWriterInput)
+//        self.add(sample: sampleBuffer, to: self.micAudioWriterInput)
+          break
       default:
         break
       }
     })
   }
+    
+    public func feedAppAudio(_ pcmBuffer: AVAudioPCMBuffer) {
+        if let sampleBuffer = Converter.configureSampleBuffer(pcmBuffer: pcmBuffer) {
+            add(sample: sampleBuffer, to: self.appAudioWriterInput)
+        }
+    }
+    
+    public func feedMicAudio(_ pcmBuffer: AVAudioPCMBuffer) {
+        if let sampleBuffer = Converter.configureSampleBuffer(pcmBuffer: pcmBuffer) {
+            add(sample: sampleBuffer, to: self.micAudioWriterInput)
+        }
+    }
 
   private func handleSampleBuffer(sampleBuffer: CMSampleBuffer) {
     if self.videoWriter?.status == AVAssetWriter.Status.unknown {
@@ -191,4 +212,50 @@ final public class ScreenRecorder {
       }
     })
   }
+}
+
+class Converter {
+    static func configureSampleBuffer(pcmBuffer: AVAudioPCMBuffer) -> CMSampleBuffer? {
+        let audioBufferList = pcmBuffer.mutableAudioBufferList
+        let asbd = pcmBuffer.format.streamDescription
+
+        var sampleBuffer: CMSampleBuffer? = nil
+        var format: CMFormatDescription? = nil
+        
+        var status = CMAudioFormatDescriptionCreate(allocator: kCFAllocatorDefault,
+                                                         asbd: asbd,
+                                                   layoutSize: 0,
+                                                       layout: nil,
+                                                       magicCookieSize: 0,
+                                                       magicCookie: nil,
+                                                       extensions: nil,
+                                                       formatDescriptionOut: &format);
+        if (status != noErr) { return nil; }
+        
+        var timing: CMSampleTimingInfo = CMSampleTimingInfo(duration: CMTime(value: 1, timescale: Int32(asbd.pointee.mSampleRate)),
+                                                            presentationTimeStamp: CMClockGetTime(CMClockGetHostTimeClock()),
+                                                            decodeTimeStamp: CMTime.invalid)
+        status = CMSampleBufferCreate(allocator: kCFAllocatorDefault,
+                                      dataBuffer: nil,
+                                      dataReady: false,
+                                      makeDataReadyCallback: nil,
+                                      refcon: nil,
+                                      formatDescription: format,
+                                      sampleCount: CMItemCount(pcmBuffer.frameLength),
+                                      sampleTimingEntryCount: 1,
+                                      sampleTimingArray: &timing,
+                                      sampleSizeEntryCount: 0,
+                                      sampleSizeArray: nil,
+                                      sampleBufferOut: &sampleBuffer);
+        if (status != noErr) { NSLog("CMSampleBufferCreate returned error: \(status)"); return nil }
+        
+        status = CMSampleBufferSetDataBufferFromAudioBufferList(sampleBuffer!,
+                                                                blockBufferAllocator: kCFAllocatorDefault,
+                                                                blockBufferMemoryAllocator: kCFAllocatorDefault,
+                                                                flags: 0,
+                                                                bufferList: audioBufferList);
+        if (status != noErr) { NSLog("CMSampleBufferSetDataBufferFromAudioBufferList returned error: \(status)"); return nil; }
+        
+        return sampleBuffer
+    }
 }
