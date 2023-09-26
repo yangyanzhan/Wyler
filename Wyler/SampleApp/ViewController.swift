@@ -47,7 +47,9 @@ final class ViewController: UIViewController {
 
     screenRecorder.startRecording(saveToCameraRoll: cameraRollSwitch.isOn, errorHandler: { error in
       debugPrint("Error when recording \(error)")
-    })
+    }) { error in
+      debugPrint("Permission Error: \(error)")
+    }
   }
 
   private func playSound() {

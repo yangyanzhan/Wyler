@@ -28,7 +28,7 @@ final public class ScreenRecorder {
   let recorder = RPScreenRecorder.shared()
 
   public init() {
-    recorder.isMicrophoneEnabled = true
+    recorder.isMicrophoneEnabled = false
   }
 
   /**
@@ -42,12 +42,13 @@ final public class ScreenRecorder {
   public func startRecording(to outputURL: URL? = nil,
                              size: CGSize? = nil,
                              saveToCameraRoll: Bool = false,
-                             errorHandler: @escaping (Error) -> Void) {
+                             errorHandler: @escaping (Error) -> Void,
+                             permissionHandler: @escaping (Error?) -> Void) {
     createVideoWriter(in: outputURL, error: errorHandler)
     addVideoWriterInput(size: size)
     self.micAudioWriterInput = createAndAddAudioInput()
     self.appAudioWriterInput = createAndAddAudioInput()
-    startCapture(error: errorHandler)
+    startCapture(error: errorHandler, permissionHandler: permissionHandler)
   }
 
   private func checkPhotoLibraryAuthorizationStatus() {
@@ -115,7 +116,7 @@ final public class ScreenRecorder {
     return audioInput
   }
 
-  private func startCapture(error: @escaping (Error) -> Void) {
+  private func startCapture(error: @escaping (Error) -> Void, permissionHandler: @escaping (Error?) -> Void) {
     recorder.startCapture(handler: { (sampleBuffer, sampleType, passedError) in
       if let passedError = passedError {
         error(passedError)
@@ -134,7 +135,9 @@ final public class ScreenRecorder {
       default:
         break
       }
-    })
+    }) { error in
+        permissionHandler(error)
+    }
   }
     
     public func feedAppAudio(_ pcmBuffer: AVAudioPCMBuffer) {
