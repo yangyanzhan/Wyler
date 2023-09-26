@@ -141,12 +141,18 @@ final public class ScreenRecorder {
   }
     
     public func feedAppAudio(_ pcmBuffer: AVAudioPCMBuffer) {
+        if self.appAudioWriterInput == nil {
+            return
+        }
         if let sampleBuffer = Converter.configureSampleBuffer(pcmBuffer: pcmBuffer) {
             add(sample: sampleBuffer, to: self.appAudioWriterInput)
         }
     }
     
     public func feedMicAudio(_ pcmBuffer: AVAudioPCMBuffer) {
+        if self.micAudioWriterInput == nil {
+            return
+        }
         if let sampleBuffer = Converter.configureSampleBuffer(pcmBuffer: pcmBuffer) {
             add(sample: sampleBuffer, to: self.micAudioWriterInput)
         }
