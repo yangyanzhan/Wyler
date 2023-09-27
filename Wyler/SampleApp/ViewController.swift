@@ -34,7 +34,7 @@ final class ViewController: UIViewController {
     bouncingBall.layer.removeAllAnimations()
     self.bouncingBall.alpha = 1
 
-      screenRecorder.stopRecording(completionHandler: { error in
+      screenRecorder.stopRecording(completionHandler: { url, error in
           
       })
   }

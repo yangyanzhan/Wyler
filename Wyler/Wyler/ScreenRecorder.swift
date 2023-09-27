@@ -179,7 +179,7 @@ final public class ScreenRecorder {
 
   - Parameter errorHandler: Called when an error is found
   */
-  public func stopRecording(completionHandler: @escaping (Error?) -> Void) {
+  public func stopRecording(completionHandler: @escaping (URL?, Error?) -> Void) {
       RPScreenRecorder.shared().stopCapture( handler: { error in
           debugPrint("[RPScreenRecorder Error]: \(String(describing: error))")
       })
@@ -187,7 +187,7 @@ final public class ScreenRecorder {
       self.micAudioWriterInput?.markAsFinished()
       self.appAudioWriterInput?.markAsFinished()
       self.videoWriter?.finishWriting {
-          completionHandler(nil)
+          completionHandler(self.videoOutputURL, nil)
       }
 //    self.videoWriterInput?.markAsFinished()
 //    self.micAudioWriterInput?.markAsFinished()
