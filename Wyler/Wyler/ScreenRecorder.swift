@@ -66,7 +66,7 @@ final public class ScreenRecorder {
       newVideoOutputURL = passedVideoOutput
     } else {
       let documentsPath = NSSearchPathForDirectoriesInDomains(.documentDirectory, .userDomainMask, true)[0] as NSString
-      newVideoOutputURL = URL(fileURLWithPath: documentsPath.appendingPathComponent("WylerNewVideo.mp4"))
+      newVideoOutputURL = URL(fileURLWithPath: documentsPath.appendingPathComponent("OkTalk.mp4"))
       self.videoOutputURL = newVideoOutputURL
     }
 
