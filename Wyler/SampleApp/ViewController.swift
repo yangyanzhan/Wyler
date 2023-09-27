@@ -34,9 +34,9 @@ final class ViewController: UIViewController {
     bouncingBall.layer.removeAllAnimations()
     self.bouncingBall.alpha = 1
 
-    screenRecorder.stoprecording(errorHandler: { error in
-      debugPrint("Error when stop recording \(error)")
-    })
+      screenRecorder.stopRecording(completionHandler: { error in
+          
+      })
   }
 
   @IBAction func startRecordingButtonWasPressed(_ sender: Any) {

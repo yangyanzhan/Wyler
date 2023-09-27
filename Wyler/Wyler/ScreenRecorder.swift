@@ -179,19 +179,22 @@ final public class ScreenRecorder {
 
   - Parameter errorHandler: Called when an error is found
   */
-  public func stoprecording(errorHandler: @escaping (Error) -> Void) {
-    RPScreenRecorder.shared().stopCapture( handler: { error in
-      if let error = error {
-        errorHandler(error)
+  public func stopRecording(completionHandler: @escaping (Error?) -> Void) {
+      RPScreenRecorder.shared().stopCapture( handler: { error in
+          debugPrint("[RPScreenRecorder Error]: \(String(describing: error))")
+      })
+      self.videoWriterInput?.markAsFinished()
+      self.micAudioWriterInput?.markAsFinished()
+      self.appAudioWriterInput?.markAsFinished()
+      self.videoWriter?.finishWriting {
+          completionHandler(nil)
       }
-    })
-
-    self.videoWriterInput?.markAsFinished()
-    self.micAudioWriterInput?.markAsFinished()
-    self.appAudioWriterInput?.markAsFinished()
-    self.videoWriter?.finishWriting {
-      self.saveVideoToCameraRollAfterAuthorized(errorHandler: errorHandler)
-    }
+//    self.videoWriterInput?.markAsFinished()
+//    self.micAudioWriterInput?.markAsFinished()
+//    self.appAudioWriterInput?.markAsFinished()
+//    self.videoWriter?.finishWriting {
+//      self.saveVideoToCameraRollAfterAuthorized(errorHandler: errorHandler)
+//    }
   }
 
   private func saveVideoToCameraRollAfterAuthorized(errorHandler: @escaping (Error) -> Void) {
