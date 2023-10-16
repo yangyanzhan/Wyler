@@ -169,7 +169,7 @@ final public class ScreenRecorder {
   }
   
   private func add(sample: CMSampleBuffer, to writerInput: AVAssetWriterInput?) {
-    if writerInput?.isReadyForMoreMediaData ?? false {
+      if self.videoWriter?.status == AVAssetWriter.Status.writing && writerInput?.isReadyForMoreMediaData ?? false {
       writerInput?.append(sample)
     }
   }
